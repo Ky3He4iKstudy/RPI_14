@@ -1,11 +1,10 @@
 package ru.samsung.itschool.musicclient
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -15,7 +14,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 class MainActivity : AppCompatActivity() {
 
     // здесь нужно указать URL проекта на Heroku
-    val HEROKU_URL: String = "http://192.168.49.102:5000/"
+    val HEROKU_URL: String = "https://kyserv.herokuapp.com/"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,27 +33,50 @@ class MainActivity : AppCompatActivity() {
         val readEntry: Button = findViewById(R.id.readEntry)
         val read: Button = findViewById(R.id.read)
 
-        read.setOnClickListener({
-            TODO("вывести в поле result список всех треков")
-        })
+        read.setOnClickListener {
+            service.read().enqueue(callback { list ->
+                result.text = list.joinToString { it.toString() }
+            })
+        }
 
-        readEntry.setOnClickListener({
-            TODO("вывести в поле result запись о треке с идентификатором по полю ввода id")
-        })
+        readEntry.setOnClickListener {
+            service.readEntry(id.text.toString().toIntOrNull() ?: 0).enqueue(callback {
+                result.text = it.toString()
+            })
+        }
 
-        create.setOnClickListener({
-            TODO("создать запись с треком на сервере и показать возвращенный " +
-                    "идентификатор добавленной записи")
-        })
+        create.setOnClickListener {
+            service.create(MusicEntry(0, name.text.toString(), phone.text.toString()))
+                .enqueue(callback {
+                    result.text = it.toString()
+                })
+        }
 
-        delete.setOnClickListener({
-            TODO("удалить на сервере запись с треком по указанному в поле ввода id")
-        })
+        delete.setOnClickListener {
+            service.delete(id.text.toString().toIntOrNull() ?: 0).enqueue(callback {
+                result.text = it.toString()
+            })
+        }
 
-        update.setOnClickListener({
-            TODO("изменить запись на сервере с треком по указанному в поле ввода id и с " +
-                    "измененными значениями в полях ввода названия трека и альбома")
-        })
+        update.setOnClickListener {
+            val entry = MusicEntry(
+                id.text.toString().toIntOrNull() ?: 0,
+                name.text.toString(),
+                phone.text.toString()
+            )
+            service.update(entry).enqueue(callback {
+                result.text = it.toString()
+            })
+        }
 
+    }
+
+    private fun <T> callback(onSuccess: (response: T) -> Unit): Callback<T> {
+        return object : Callback<T> {
+            override fun onFailure(call: Call<T>, t: Throwable) {}
+            override fun onResponse(call: Call<T>, response: Response<T>) {
+                response.body()?.let { onSuccess(it) }
+            }
+        }
     }
 }

@@ -1,3 +1,3 @@
 package ru.samsung.itschool.musicclient
 
-class MusicEntry (var id:Long, var  name:String, var album:String)
+data class MusicEntry(var id: Int, var name: String, var album: String)
